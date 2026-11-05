@@ -340,6 +340,10 @@ let named = Unit { kind: 2, hp: 50, x: 0, y: 0, name: "scout" };
 - A literal ending in `..` fills every omitted field with its default.
 - A `var` global with only a type gets those defaults too.
 - A literal may name fields or list them in order.
+- `let f: T` marks a field never assigned after construction; `const f: T`
+  makes its contents read-only. `pad n` inserts `n` unused bytes, and a
+  bare `pad` aligns the next field to its scalar width for foreign layouts.
+  Equality ignores pad bytes.
 
 Variable-size fields (`u8[]`, `T[varint]`, `T[]`) sit inline and are frozen
 once built. Fixed-size fields assign freely, and a limited array field
@@ -796,9 +800,12 @@ locally.
 
 - One root file holds `main` and declares imports.
 - `import name;` imports a standard-library module.
+- `import a.b.c;` imports `a/b/c.goose` from the package root, a declared package, or the standard library.
+- `import .helper;` resolves relative to the importing file.
 - `import name from "path";` imports a package from a directory.
 - `import name from "owner/repo@v1";` imports a git package.
-- `import namespace foo { ... }` / `foo::name` for qualified names.
+- `namespace image;` at the top of a file places its declarations in `image`; elsewhere they are `image::Pixel`, `image::brightness(p)`.
+- `fn ::main()` declares `main` in the global namespace from a namespaced file.
 - Declarations are order-independent at top level.
 - `embed_file("path")` reads a file's bytes at compile time.
 
