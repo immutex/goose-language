@@ -1,0 +1,10 @@
+# Authoring helpers, installed locally with `npx skills add`
+.agents/
+skills-lock.json
+
+# Build output from running the examples
+*.exe
+*.pdb
+*.obj
+*.ilk
+build/

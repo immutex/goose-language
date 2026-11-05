@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.goose text eol=lf
+*.md text eol=lf
+*.py text eol=lf
