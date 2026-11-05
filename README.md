@@ -89,7 +89,11 @@ threads example needs `goose build`.
 The skill was written against Goose `v2026.3-293-g335fddc1` (the `main`
 branch on 2026-11-04), using a compiler built from that tree. Every example
 was checked, and the snippets in `SKILL.md` and `references/patterns.md`
-were compiled in a combined test program.
+were compiled in a combined test program. Two fresh-agent trials (a
+statistics program and a C++ inventory port) then ran with only the skill
+for guidance. Their findings — dictionary key lifetime, hash-order
+iteration, float printing, and where a build-tree compiler finds the
+standard library — are now covered.
 
 ```bash
 python scripts/verify.py --goose /path/to/goose --run
