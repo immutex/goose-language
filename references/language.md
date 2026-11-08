@@ -225,6 +225,14 @@ Rules:
 - An array of variable-size elements is **sequential**: iterate it, do not
   index it, and it has no `pop`.
 - A stored length must hold the actual count (`T[u8]` holds at most 255).
+- `.len` is the count now; `.cap` exists only on `T[..k]` and `T[..]` and
+  never changes. A resizable has no `.cap`; it grows until its data stack
+  runs out. Pushing past a limited array's capacity aborts.
+- Nothing is padded, so elements after a small length are unaligned, and
+  Goose's loads allow for it.
+- A resizable keeps its data stack until its owner's scope ends, even after
+  you stop pushing. Copy it into a `T[]` to finish it:
+  `let done: i64[] = copy(grow);`
 
 Literals:
 
@@ -292,7 +300,9 @@ Three builtins render any values, with no format string:
 - `str(a, b, ...)` — a fresh `u8[>..]`, built at its destination.
 
 A `format` overload `fn format(out: u8[>..]&, v: T)` defines a type's text
-form everywhere, including inside arrays.
+form everywhere, including inside arrays. A generic overload over a struct
+or variant pattern, such as `fn format<T>(out: u8[>..]&, b: Box<T>)`,
+renders every instance of it; a non-generic overload for one instance wins.
 
 `std` adds the string operations: `trim`, `find`, `split`, `words`,
 `join`, `parse_int`, `parse_flt`, `format_int`, `compare`, `to_lower`,
@@ -456,6 +466,9 @@ An enum whose variants all have no payload is a C-like enum, one byte.
 `const for <N, V> in variants<T>` expands over the variants at compile
 time; `const for <F, A> in fields<T>` does the same over fields.
 
+A generic enum names its type arguments at the literal:
+`Opt<i64>.Some { v: 1 }`, `Opt<i64>.None`.
+
 ---
 
 ## 10. References and optionals
@@ -594,6 +607,34 @@ const for <U> in types<i8, u16, f32> { print(default<U>()); }
 const for <C> in [1, 2, 4] { let a: u8[C] = [0; C]; }
 ```
 
+`const if` selects a fragment at specialization time and generates only the
+chosen branch. It stands where a `const for` does, chains with
+`else const if`, and its condition must be a compile-time constant. Two
+queries exist for it:
+
+```goose
+fn required<T>() {
+    const for <N, A> in fields<T> {
+        const if !has_default<A> { print("required: ", N); }
+    }
+}
+
+fn describe<T>(v: T) {
+    const if same<T, i64> { print("an integer ", v); }
+    else const if same<T, Shape> { print("a shape"); }
+    else { print("something else"); }
+}
+```
+
+- `has_default<A>` — true when the field `A` declares a written `= ...`.
+- `same<T1, T2>` — true when the two types are identical after
+  substitution, `const` included.
+
+This is how a generic function treats fields differently without every
+branch having to typecheck for every instantiation: the branch not taken is
+parsed but never checked. A runtime `if` on the same predicate could not do
+that.
+
 `abort(msg)` and `exit(code)` never return; the checker uses that when
 inferring results.
 
@@ -602,7 +643,8 @@ inferring results.
 ## 13. Functions
 
 Functions are free functions. There are no methods or `impl` blocks, but
-`x.f(a)` calls `f(x, a)` for any function.
+`x.f(a)` calls `f(x, a)` for any function, and `x.f<T>(a)` calls
+`f<T>(x, a)`.
 
 ```goose
 fn name(a: i64, var b: f64, xs: i32[:]) -> i64 { ... }
@@ -683,7 +725,9 @@ print(twice(21), " ", span(3.5, 1.0));
 ```
 
 Type arguments are inferred; write `f<i64>(x)` when no argument determines
-one (`qget<Job>()`, `zero<f64>()`).
+one (`qget<Job>()`, `zero<f64>()`). A variant literal passed to a generic
+binds the *variant* type, not the enum: annotate the argument when the body
+needs the enum (`let s: Shape = Shape.Circle { r: 1 }; name(s)`).
 
 Function values are compile-time entities passed as generic parameters.
 They cannot be stored, returned, or put in data. Every call is direct and
@@ -947,7 +991,7 @@ block guard defer match return break continue as true false null self bool
 varint i8 i16 i32 i64 u8 u16 u32 u64 f32 f64`.
 
 **Contextual**: `from`, `upto`, `inline`, `checkfree`, `fields`, `types`,
-`variants`.
+`variants`, and `has_default` and `same` in a `const if` condition.
 
 **Precedence**, tightest first (Rust's):
 

@@ -40,8 +40,20 @@ fn next_pow2(x: i64) -> i64
 fn popcount(x: u64) -> i64
 fn clz(x: u64) -> i64               // 64 for 0
 fn ctz(x: u64) -> i64               // 64 for 0
+fn rotl<N>(x: u32, n: N) -> u32     // and u64; rotr rotates right
+fn byte_swap(x: u32) -> u32         // and u16, u64
+fn is_pow2<T>(x: T) -> bool         // false for x <= 0
+fn ilog2<T>(x: T) -> i64            // floor(log2); -1 for x <= 0
+fn isqrt<T>(x: T) -> T              // floor(sqrt); aborts for x < 0
+fn gcd<T>(a: T, b: T) -> T          // never negative; gcd(0, 0) == 0
+fn lcm<T>(a: T, b: T) -> T          // never negative; 0 if either is 0
 fn swap<T>(a: T&, b: T&)
 ```
+
+`rotl`/`rotr` take a count of any width modulo the width, so a negative count
+rotates the other way; a narrow value names the width to rotate at
+(`rotl(b as u32, 4)`). `gcd`/`lcm` work on magnitudes and abort if the
+result does not fit the type. `isqrt` is exact at every `u64`.
 
 ### Hashing
 
@@ -64,14 +76,23 @@ fn hash(k: Key) -> u64 { hash_combine(hash(k.a), hash(k.b)) }
 ### Random
 
 ```goose
-struct rng { s: u64 }
+struct rng { s: u64 }                    // splitmix64; the seed is the state
 fn rand_u64(r: rng&) -> u64
 fn rand_int(r: rng&, n: i64) -> i64      // [0, n), unbiased
-fn rand_flt(r: rng&) -> f64              // [0, 1)
+fn rand_range(r: rng&, size: i64) -> i64            // [0, size)
+fn rand_range(r: rng&, lo: i64, size: i64) -> i64   // [lo, lo + size)
+fn rand_flt(r: rng&) -> f64              // [0, 1), 53 bits
+fn rand_f32(r: rng&) -> f32              // [0, 1), 24 bits
+fn rand_gaussian(r: rng&) -> f64         // mean 0, variance 1
 fn shuffle<T>(xs: T[:], r: rng&)
 
-var r = rng { os.random_seed() };
+var r = rng { random_seed() };           // os is imported for this
+let d = r.rand_range(6);                 // 0 to 5
+let roll = r.rand_range(1, 6);           // a die: 1 to 6
 ```
+
+`rand_range` takes a count, not an end, so it has exactly `size` results.
+`rand_int(r, n)` is the same range as `rand_range(r, n)`.
 
 ### Arrays: read and search
 
@@ -284,12 +305,15 @@ fn alloc_copy<T>(pool: slice_pool<T>&, src: T[:]) -> T[:]
 fn free_slice<T>(pool: slice_pool<T>&, s: T[:])
 fn realloc_slice<T>(pool: slice_pool<T>&, s: T[:], n: i64) -> T[:]
 fn recycle_all<T>(pool: slice_pool<T>&)
+fn trim(pool: slice_pool<u8>&) -> bool
 ```
 
 Reusable contiguous runs with coalescing. `alloc_slice` defaults every
 element; `alloc_copy` initializes from a source. `realloc_slice` may move
 a run, so keep offsets rather than slices across a realloc. `items.len` is
-a high-water mark.
+a high-water mark. `trim` (newer than `v2026.4`) returns the pages inside
+free spans to the OS, for long-running programs that close large buffers;
+it does not shrink `items` or invalidate live runs.
 
 ```goose
 var bytes = slice_pool<u8> {};

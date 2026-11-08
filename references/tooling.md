@@ -151,10 +151,15 @@ extern fn impl_sum(a: i32, b: i32) -> i32;
 ```
 
 A package's sidecar may instead name `cmake_target`, `c_headers`, or
-`main_thread_only = true;`.
+`main_thread_only = true;`. Two packages cannot share a root directory or
+the same repository ref.
 
 `extern "name" { ... }` loads functions from a shared library by name at
 program start; no C is compiled.
+
+A run (`goose run`) links only against the compiler, which supplies the C99
+`<math.h>` functions and little else of the C library. Any other `extern fn`
+to libc needs `goose build`, the program's own C, or an `extern "lib"` block.
 
 ## Environment
 
@@ -205,6 +210,7 @@ build/goose samples/01_tour.goose
 | `goose` not found | release unpacked and on `PATH`; or `build/Release/goose.exe` |
 | "cannot find the standard library" | `GOOSE_STDLIB` or `--stdlib`; releases keep `stdlib/` beside the exe |
 | threads fail to run | use `goose build`, not `goose run` |
+| `extern fn` to a C library function not found under `goose run` | a run resolves only C99 `<math.h>`; use `goose build`, the program's own C, or an `extern "lib"` block |
 | build fails at the C step | `goose toolchain`; install or select a C compiler with `--cc` |
 | package will not fetch | `git` present; network; `--offline` not set |
 | program runs out of data stack | `--stack-reserve 16G`; `--stacks`; find accidental growth |

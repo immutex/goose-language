@@ -86,6 +86,7 @@ Casts:
 | `resizable field a of struct S must be the final field; use root struct for independently stored fields` | two resizable fields, or a resizable field before another | move it last, or use `root struct` |
 | `no matching overload ... cannot pass i32[4] as i64[:]` | slice element types must match exactly | widen/copy to `i64[4]`, or change the parameter |
 | `cannot write p: a by-value binding is a copy of the element; bind it by reference (&p) to write the element` | `for p in xs` over fixed-size elements | `for &p in xs` |
+| `redundant &` (warning) | the elements already bind by reference (variable-size) | drop the `&`; it changes nothing |
 | `an integer is expected here, got const u8[:]` | indexing with a string | use an integer |
 | `index N out of bounds` (runtime) | bad index | check `.len`, or use `%`, or fix the logic |
 
@@ -180,6 +181,8 @@ Pool facts that surprise people:
 | a global does not change in `main` | each worker has its own copy | send a message back through a queue |
 | `main-thread-only` package called from a worker | `gfx`, `ui`, `audio`, `physics` rule | keep those calls on the main thread |
 | `thread_wait` loses a contained worker's message | the first wait takes it | wait once, with the message buffer |
+| `extern fn` to a libc function is not found under `goose run` | a run resolves only C99 `<math.h>` | `goose build`, the program's own C, or an `extern "lib"` block |
+| `par for`, `simd for`, `par simd for` rejected | these are design proposals in `docs/design/`, not implemented | use `thread_fn` with queues, or plain loops |
 
 ## 10. Runtime errors
 
@@ -210,7 +213,7 @@ a runaway recursion.
 | C compile or link failure | `goose build -v`; `goose build --dry-run`; read the log path in the error |
 | package not fetched | `goose fetch file.goose`; check `git`; remove `--offline` |
 | LSP reports a missing package | `goose fetch`; the LSP never fetches |
-| `root struct` or `defer expr;` fails to parse | the compiler is the older `v2026.3` release | build Goose from main, or avoid those features |
+| `root struct`, `const if`, or `defer expr;` fails to parse | the compiler is older than `v2026.4` | use a `v2026.4` or newer release, or a build from `main` |
 | stale build after moving the compiler | `GOOSE_HOME` caches; delete it, or set a new one |
 
 Exit codes: `run` returns the program's code (0, `exit(code)`, or 1 on

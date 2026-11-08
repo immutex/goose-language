@@ -32,21 +32,20 @@ matters, and `goose build` for threads, timing, or a real executable.
 
 If `goose` is not on PATH, look for a release unpacked under `~/.goose`, a
 `build/` directory in a Goose checkout (`build/Release/goose.exe` on
-Windows), or ask the user where it is. A release finds the standard library
-beside the executable. A compiler built in a build tree **outside** the
-source tree does not; point it at the checkout:
+Windows), or ask the user where it is. The compiler finds the standard
+library beside itself, in a parent directory, or where its build configured
+it. If it cannot, point it at the checkout:
 
 ```bash
 GOOSE_STDLIB=/path/to/goose/stdlib      # or --stdlib /path/to/goose/stdlib
 ```
 
-`--stdlib` and `GOOSE_STDLIB` always override the search.
-
-Run `goose version`. A version like `v2026.3-293-g335fddc1` or newer is
-what this skill targets. The plain `v2026.3` release is older: it predates
-`root struct` (which the standard-library pools use) and statement-form
-`defer`. If `goose version` prints only `goose runtime <hash>`, expect
-those features to fail and use syntax from the release's own docs.
+Run `goose version`. **`v2026.4` or newer** is what this skill targets; its
+examples are checked against that release. Older compilers miss features the
+standard library itself now uses, notably `root struct`, `const if` and
+statement-form `defer`. If `goose version` prints only
+`goose runtime <hash>`, the compiler predates `v2026.4`: expect those to
+fail, and prefer a fresh release or a build from `main`.
 
 ## The mental model
 

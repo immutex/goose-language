@@ -58,7 +58,7 @@ references/
   patterns.md             the shape to reach for, task by task
   tooling.md              CLI, packages, C interop, formatter, LSP
   diagnostics.md          compiler and runtime messages, with fixes
-examples/                 eight complete programs, all compiler-checked
+examples/                 nine complete programs, all compiler-checked
 scripts/verify.py         re-check every example with a local compiler
 ```
 
@@ -80,20 +80,20 @@ The examples are complete programs, not fragments:
 | `examples/06_wordcount.goose` | arguments, files, dictionary keys as slices, sorting |
 | `examples/07_threads.goose` | a worker pool and typed queues |
 | `examples/08_libs.goose` | JSON, regex, CSV, base64, and binary reads and writes |
+| `examples/09_meta.goose` | compile-time reflection with `const for` and `const if` |
 
-All eight pass `goose check`. Seven run under the in-process JIT; the
+All nine pass `goose check`. Eight run under the in-process JIT; the
 threads example needs `goose build`.
 
 ## Verification
 
-The skill was written against Goose `v2026.3-293-g335fddc1` (the `main`
-branch on 2026-11-04), using a compiler built from that tree. Every example
-was checked, and the snippets in `SKILL.md` and `references/patterns.md`
+The skill targets Goose `v2026.4` and the `main` branch after it. Every
+example is checked against the `v2026.4` release and against a compiler
+built from `main`; the snippets in `SKILL.md` and `references/patterns.md`
 were compiled in a combined test program. Two fresh-agent trials (a
 statistics program and a C++ inventory port) then ran with only the skill
-for guidance. Their findings — dictionary key lifetime, hash-order
-iteration, float printing, and where a build-tree compiler finds the
-standard library — are now covered.
+for guidance. Their findings, including dictionary key lifetime, hash-order
+iteration and float printing, are now covered.
 
 ```bash
 python scripts/verify.py --goose /path/to/goose --run
@@ -101,10 +101,10 @@ python scripts/verify.py --goose /path/to/goose --run
 
 If you change an example, run that script before committing.
 
-**Compiler version matters.** The `v2026.3` release is older than the
-documentation in the Goose repository. It does not parse `root struct`,
-which the standard-library pools use, or statement-form `defer`. Build the
-compiler from `main`, or from a release later than `v2026.3`:
+**Compiler version matters.** `v2026.4` added `root struct`, statement-form
+`defer` and `const if`, all of which the standard library and this skill
+use. Older releases will fail to parse them. Use `v2026.4` or newer, or
+build from `main`:
 
 ```bash
 git clone https://github.com/aardappel/goose
@@ -113,7 +113,9 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-`goose version` prints the revision, so an agent can tell which it has.
+`goose version` prints the revision, so an agent can tell which it has. One
+addition here is newer than `v2026.4`: `slice_pool.trim`, which the skill
+lists with that note.
 
 ## What to ask it
 

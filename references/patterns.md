@@ -417,3 +417,4 @@ validation to where an id is created.
 | `examples/06_wordcount.goose` | args, files, dictionary, sort |
 | `examples/07_threads.goose` | worker pool and typed queues |
 | `examples/08_libs.goose` | JSON, regex, CSV, base64, binary |
+| `examples/09_meta.goose` | `const for`, `const if`, `same`, `has_default` |
